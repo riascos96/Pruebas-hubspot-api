@@ -1,0 +1,45 @@
+{
+  "name": "pruebas-hubspot-api",
+  "version": "1.0.0",
+  "description": "Este proyecto conecta tu cuenta de **HubSpot** con una base de datos para **traer la información**, **ordenarla** y **mostrarla en gráficos claros** que ayuden a tomar decisiones.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -p tsconfig.json",
+    "start": "node --env-file=.env dist/index.js",
+    "db:create": "node --env-file=.env --import tsx/esm db/create-db.ts",
+    "db:setup": "node --env-file=.env --import tsx/esm db/setup.ts",
+    "db:init": "npm run -s db:create && npm run -s db:setup",
+    "catalog:discover": "node --env-file=.env --import tsx/esm src/catalog/discover.ts",
+    "ingest:full": "node --env-file=.env --import tsx/esm src/ingest/full.ts",
+    "ingest:full:one": "node --env-file=.env --import tsx/esm src/ingest/fullOne.ts",
+    "ingest:inc": "node --env-file=.env --import tsx/esm src/ingest/incremental.ts",
+    "check:db": "node --env-file=.env --import tsx/esm src/checks/checkDb.ts",
+    "check:hs": "node --env-file=.env --import tsx/esm src/checks/checkHs.ts",
+    "verify:counts": "node --env-file=.env --import tsx/esm scripts/verifyCounts.ts",
+    "debug:dump": "node --env-file=.env --import tsx/esm scripts/dumpObject.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/riascos96/Pruebas-hubspot-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/riascos96/Pruebas-hubspot-api/issues"
+  },
+  "homepage": "https://github.com/riascos96/Pruebas-hubspot-api#readme",
+  "dependencies": {
+    "bottleneck": "^2.19.5",
+    "pg": "^8.16.3",
+    "pino": "^9.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
