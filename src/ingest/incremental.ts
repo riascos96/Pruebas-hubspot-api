@@ -67,7 +67,7 @@ async function incObject(name: string) {
          DO UPDATE SET updated_at=EXCLUDED.updated_at, payload=EXCLUDED.payload, ingested_at=NOW()`,
         [name, id, ts, row]
       );
-      if (ts > maxSeen) maxSeen = ts;
+      if (ts !== null && ts > maxSeen) maxSeen = ts;
       total++;
     }
 

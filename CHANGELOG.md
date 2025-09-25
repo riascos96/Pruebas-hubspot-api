@@ -4,6 +4,21 @@ Todos los cambios notables de este proyecto serán documentados en este archivo.
 
 El formato se inspira en “Keep a Changelog” y sigue SemVer.
 
+## [1.1.0] - 2025-09-24
+
+### Agregado
+- Esquema `stg` con tablas normalizadas para contactos, compañías y actividades (calls/emails/meetings/notes/tasks).
+- Script `npm run normalize:stg` para consolidar datos desde `raw_hubspot.objects_raw` hacia `stg.*`.
+- Utilidades de normalización para limpiar emails, teléfonos y fechas antes de cargar a staging.
+
+### Modificado
+- README con instrucciones para ejecutar la normalización y descripción de las nuevas tablas.
+- DDL principal para crear índices de email y dominio sobre las tablas `stg`.
+- Proceso incremental ajustado para evitar avanzar el watermark cuando `hs_lastmodifieddate` viene vacío.
+
+### Corregido
+- Prevención de timestamp `null` al evaluar el mayor `hs_lastmodifieddate` visto en la carga incremental.
+
 ## [1.0.0] - 2024-12-09
 
 ### Agregado
@@ -27,4 +42,3 @@ El formato se inspira en “Keep a Changelog” y sigue SemVer.
 
 ### Removido
 - Dependencias innecesarias para proxy por defecto (uso opcional de `undici` si se requiere).
-

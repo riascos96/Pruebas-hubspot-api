@@ -75,6 +75,7 @@ npm run check:hs   # Llamada simple a HubSpot (contacts?limit=1)
 - `npm run ingest:inc` — Carga INCREMENTAL por `hs_lastmodifieddate`. Trae todas las propiedades.
 - `npm run verify:counts` — Compara conteos HS vs DB por objeto (sanity check).
 - `npm run debug:dump -- <obj> [id]` — Muestra propiedades en DB y en API para depurar.
+- `npm run normalize:stg` — Limpia y normaliza `contacts`, `companies` y actividades hacia `stg.*`.
 
 ## Objetos cubiertos (MVP)
 - Core: `contacts`, `companies`, `deals`, `tickets`, `products`, `line_items`
@@ -88,11 +89,15 @@ npm run check:hs   # Llamada simple a HubSpot (contacts?limit=1)
 - `meta.sync_state` — Estado de sincronización (paginación y/o watermark)
 - `raw_hubspot.objects_raw` — Payload 1:1 por objeto + `updated_at` y `ingested_at`
 - `raw_hubspot.associations_raw` — Asociaciones v4 (cuando se habilite el ingestor)
+- `stg.contacts` — Contactos con emails estandarizados, teléfonos limpios y fechas en TIMESTAMPTZ
+- `stg.companies` — Empresas con dominio, teléfonos y owner normalizados
+- `stg.activities` — Actividades (`calls/emails/meetings/notes/tasks`) con metadatos clave y payload plano
 
 ## Flujo
 1. `catalog:discover` → pobla `meta.*` (schemas/properties/pipelines/owners)
 2. `ingest:full` → lista IDs por página y hace `batch/read` para traer TODAS las propiedades; UPSERT en `raw_hubspot.objects_raw`
 3. `ingest:inc` → `/search` por `hs_lastmodifieddate` ascendente; UPSERT y actualiza `meta.sync_state`
+4. `normalize:stg` → lee de `raw_hubspot.objects_raw` y consolida en tablas `stg.*` listas para reporting/analytics
 
 ## Buenas prácticas y notas
 - ESM NodeNext: en TypeScript, los imports relativos deben terminar en `.js`.

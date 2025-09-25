@@ -20,6 +20,7 @@ Construir un pipeline local (sin Docker ni nubes) que:
 - Persistencia:
   - `meta.*` → catálogo, pipelines, owners, `sync_state`.
   - `raw_hubspot.*` → objetos y asociaciones (payload JSONB completo).
+  - `stg.*` → tablas normalizadas para reporting inicial (emails limpios, teléfonos E.164, fechas TIMESTAMPTZ).
 
 ## Fuera de Alcance (por ahora)
 - Hosting/infra (AWS, Docker, orquestadores).
@@ -58,6 +59,7 @@ hubspot-etl/
 │  ├─ catalog/           # descubrimiento de catálogo
 │  ├─ ingest/            # full + incremental (+ asociaciones)
 │  ├─ clients/           # cliente HubSpot (fetch + bottleneck)
+│  ├─ normalization/     # staging: helpers y scripts hacia `stg.*`
 │  ├─ utils/             # db pool, logger, ensureEnv
 │  └─ types/             # (opcional)
 ├─ db/
@@ -73,13 +75,15 @@ hubspot-etl/
 ## Tablas clave
 - `meta.objects`, `meta.properties`, `meta.pipelines`, `meta.owners`, `meta.sync_state`.
 - `raw_hubspot.objects_raw`, `raw_hubspot.associations_raw`.
+- `stg.contacts`, `stg.companies`, `stg.activities`.
 
 ## Flujo de datos
 1) Discover → `meta.*`.
 2) Full Load → `/objects/{obj}` (listar IDs) + `/batch/read` (todas las propiedades) → `raw_hubspot.objects_raw`.
 3) Incremental → `/objects/{obj}/search` (`hs_lastmodifieddate`) → UPSERT y watermark en `meta.sync_state`.
-4) (Próximo) Asociaciones v4 → `raw_hubspot.associations_raw`.
-5) (Próximo) Normalización a `stg` y modelos `analytics`.
+4) Normalización → `raw_hubspot.objects_raw` → `stg.contacts`, `stg.companies`, `stg.activities` (emails/phones limpios + timestamps UTC).
+5) (Próximo) Asociaciones v4 → `raw_hubspot.associations_raw`.
+6) (Próximo) Modelos `analytics` sobre `stg.*`.
 
 ## Rate Limits y Resiliencia
 - List endpoints: ~100 req / 10 s.
@@ -89,7 +93,8 @@ hubspot-etl/
 
 ## Backlog inmediato
 - Asociaciones v4: batch read para pares comunes (contacts↔companies, deals↔companies, deals↔contacts, etc.).
-- Normalización mínima (stg): emails en minúsculas, teléfonos E.164, dedupe por email/domain, fechas UTC.
-- KPIs base: conteos por objeto/ventana de tiempo; diferencias vs HubSpot (script verifyCounts).
+- Ampliar normalización `stg` a deals, tickets, products y line_items con llaves foráneas hacia contactos/compañías.
+- Automatizar la ejecución de `normalize:stg` después de cada ingest (full/inc) y agregar monitoreo de filas procesadas.
+- Dedupe/contact curator: reglas por email/domain + flags de calidad de datos.
+- Modelos `analytics` iniciales (KPIs base, funnels) y validaciones de conteos vs HubSpot.
 - Seguridad: rotación de token si se expone; limitar scopes `.read` necesarios.
-
