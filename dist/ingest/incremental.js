@@ -45,12 +45,14 @@ async function incObject(name) {
         const data = await hsPostJson(`/crm/v3/objects/${name}/search`, body);
         for (const row of (data.results ?? [])) {
             const id = String(row.id);
-            const ts = Number(row.properties?.hs_lastmodifieddate ?? 0);
+            const ts = Number(row.properties?.hs_lastmodifieddate ?? 0)
+                || Number(row.properties?.createdate ?? 0)
+                || null;
             await pg.query(`INSERT INTO raw_hubspot.objects_raw(object_name,hs_object_id,updated_at,payload)
-         VALUES($1,$2,to_timestamp(($3::double precision)/1000.0),$4)
+         VALUES($1,$2,COALESCE(to_timestamp(($3::double precision)/1000.0), NOW()),$4)
          ON CONFLICT (object_name,hs_object_id)
-         DO UPDATE SET updated_at=EXCLUDED.updated_at, payload=EXCLUDED.payload, ingested_at=NOW()`, [name, id, ts || null, row]);
-            if (ts > maxSeen)
+         DO UPDATE SET updated_at=EXCLUDED.updated_at, payload=EXCLUDED.payload, ingested_at=NOW()`, [name, id, ts, row]);
+            if (ts !== null && ts > maxSeen)
                 maxSeen = ts;
             total++;
         }

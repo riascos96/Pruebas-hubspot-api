@@ -1,7 +1,7 @@
 {
   "name": "pruebas-hubspot-api",
   "version": "1.0.0",
-  "description": "Este proyecto conecta tu cuenta de **HubSpot** con una base de datos para **traer la información**, **ordenarla** y **mostrarla en gráficos claros** que ayuden a tomar decisiones.",
+  "description": "Este proyecto conecta tu cuenta de **HubSpot** con una base de datos para **traer la informaci\u00f3n**, **ordenarla** y **mostrarla en gr\u00e1ficos claros** que ayuden a tomar decisiones.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -17,7 +17,9 @@
     "check:db": "node --env-file=.env --import tsx/esm src/checks/checkDb.ts",
     "check:hs": "node --env-file=.env --import tsx/esm src/checks/checkHs.ts",
     "verify:counts": "node --env-file=.env --import tsx/esm scripts/verifyCounts.ts",
-    "debug:dump": "node --env-file=.env --import tsx/esm scripts/dumpObject.ts"
+    "debug:dump": "node --env-file=.env --import tsx/esm scripts/dumpObject.ts",
+    "dashboard:api": "node --env-file=.env --import tsx/esm src/server/dashboardApi.ts",
+    "normalize:stg": "node --env-file=.env --import tsx/esm src/normalization/run.ts"
   },
   "repository": {
     "type": "git",

@@ -1,4 +1,4 @@
-import { hsGetJson } from "../clients/hubspot.js";
+import { hsGetJson, hsPostJson } from "../clients/hubspot.js";
 import { getDbConnection } from "../utils/dbConnection.js";
 import { log } from "../utils/logger.js";
 async function getAllPropertyNames(pg, name) {
@@ -11,26 +11,33 @@ async function getAllPropertyNames(pg, name) {
 async function ingestObject(name) {
     const pg = getDbConnection();
     const props = await getAllPropertyNames(pg, name).catch(() => ["hs_lastmodifieddate"]);
-    const propsParam = props.join(",");
     let after;
     let count = 0;
     while (true) {
-        const data = await hsGetJson(`/crm/v3/objects/${name}`, {
+        const page = await hsGetJson(`/crm/v3/objects/${name}`, {
             limit: 100,
             archived: false,
-            properties: propsParam,
             ...(after ? { after } : {})
         });
-        for (const row of (data.results ?? [])) {
-            const id = String(row.id);
-            const ts = Number(row.properties?.hs_lastmodifieddate ?? 0) || null;
-            await pg.query(`INSERT INTO raw_hubspot.objects_raw(object_name,hs_object_id,updated_at,payload)
-         VALUES($1,$2,to_timestamp(($3::double precision)/1000.0),$4)
-         ON CONFLICT (object_name,hs_object_id)
-         DO UPDATE SET updated_at=EXCLUDED.updated_at, payload=EXCLUDED.payload, ingested_at=NOW()`, [name, id, ts, row]);
-            count++;
+        const ids = (page.results ?? []).map((r) => String(r.id));
+        if (ids.length) {
+            const body = { inputs: ids.map(id => ({ id })), properties: props };
+            const data = await hsPostJson(`/crm/v3/objects/${name}/batch/read`, body);
+            for (const row of (data.results ?? [])) {
+                const id = String(row.id);
+                const ts = Number(row.properties?.hs_lastmodifieddate ?? 0)
+                    || Number(row.properties?.createdate ?? 0)
+                    || (row.updatedAt ? Date.parse(row.updatedAt) : 0)
+                    || (row.createdAt ? Date.parse(row.createdAt) : 0)
+                    || null;
+                await pg.query(`INSERT INTO raw_hubspot.objects_raw(object_name,hs_object_id,updated_at,payload)
+           VALUES($1,$2,COALESCE(to_timestamp(($3::double precision)/1000.0), NOW()),$4)
+           ON CONFLICT (object_name,hs_object_id)
+           DO UPDATE SET updated_at=EXCLUDED.updated_at, payload=EXCLUDED.payload, ingested_at=NOW()`, [name, id, ts, row]);
+                count++;
+            }
         }
-        after = data.paging?.next?.after;
+        after = page.paging?.next?.after;
         if (!after)
             break;
     }
