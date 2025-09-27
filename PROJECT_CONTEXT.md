@@ -17,6 +17,7 @@ Construir un pipeline local (sin Docker ni nubes) que:
   - Core: `contacts`, `companies`, `deals`, `tickets`, `products`, `line_items`
   - Actividades: `calls`, `emails`, `meetings`, `notes`, `tasks`
   - Metadatos: `owners`, `pipelines`, `properties`
+- Reporterías: API `/api/dashboard` y frontend Vite/React con KPIs básicos sobre `stg.*`.
 - Persistencia:
   - `meta.*` → catálogo, pipelines, owners, `sync_state`.
   - `raw_hubspot.*` → objetos y asociaciones (payload JSONB completo).
@@ -24,7 +25,6 @@ Construir un pipeline local (sin Docker ni nubes) que:
 
 ## Fuera de Alcance (por ahora)
 - Hosting/infra (AWS, Docker, orquestadores).
-- Frontend/UI de dashboards.
 - Limpieza avanzada y `stg/analytics` (se harán después).
 - OAuth multi-cuenta (solo Private App de una cuenta).
 
@@ -76,14 +76,17 @@ hubspot-etl/
 - `meta.objects`, `meta.properties`, `meta.pipelines`, `meta.owners`, `meta.sync_state`.
 - `raw_hubspot.objects_raw`, `raw_hubspot.associations_raw`.
 - `stg.contacts`, `stg.companies`, `stg.activities`.
+- `dashboard` (API + frontend React) para visualizar KPIs básicos sobre `stg.*` y `raw_hubspot`.
 
 ## Flujo de datos
 1) Discover → `meta.*`.
 2) Full Load → `/objects/{obj}` (listar IDs) + `/batch/read` (todas las propiedades) → `raw_hubspot.objects_raw`.
 3) Incremental → `/objects/{obj}/search` (`hs_lastmodifieddate`) → UPSERT y watermark en `meta.sync_state`.
 4) Normalización → `raw_hubspot.objects_raw` → `stg.contacts`, `stg.companies`, `stg.activities` (emails/phones limpios + timestamps UTC).
-5) (Próximo) Asociaciones v4 → `raw_hubspot.associations_raw`.
-6) (Próximo) Modelos `analytics` sobre `stg.*`.
+5) Dashboard API → expone KPIs derivados (conversión, carga promedio por owner, actividades/contacto) y datasets agregados.
+6) Frontend React → consume `/api/dashboard` y presenta métricas (gráficos doughnut, barras stacked, combo line/bar, etc.).
+7) (Próximo) Asociaciones v4 → `raw_hubspot.associations_raw`.
+8) (Próximo) Modelos `analytics` sobre `stg.*`.
 
 ## Rate Limits y Resiliencia
 - List endpoints: ~100 req / 10 s.
@@ -95,6 +98,8 @@ hubspot-etl/
 - Asociaciones v4: batch read para pares comunes (contacts↔companies, deals↔companies, deals↔contacts, etc.).
 - Ampliar normalización `stg` a deals, tickets, products y line_items con llaves foráneas hacia contactos/compañías.
 - Automatizar la ejecución de `normalize:stg` después de cada ingest (full/inc) y agregar monitoreo de filas procesadas.
+- Publicar documentación paso a paso para refrescar dashboard (ingest → normalize → dashboard API → front) y cubrir despliegue multi-entorno.
+- Extender dashboards con filtros interactivos, segmentación y drill-down, aprovechando la API enriquecida.
 - Dedupe/contact curator: reglas por email/domain + flags de calidad de datos.
 - Modelos `analytics` iniciales (KPIs base, funnels) y validaciones de conteos vs HubSpot.
 - Seguridad: rotación de token si se expone; limitar scopes `.read` necesarios.

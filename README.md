@@ -108,11 +108,17 @@ npm run check:hs   # Llamada simple a HubSpot (contacts?limit=1)
 - `updated_at` en DB: usa `hs_lastmodifieddate`, si no está usa `createdate`, si no hay ninguno usa `NOW()`.
 
 ## Dashboards (React + Chart.js)
+Antes de levantar la web, ejecuta `npm run normalize:stg` cada vez que completes una ingesta para que las tablas `stg.*` alimenten los indicadores.
+
 1. Ejecuta la API agregada: `npm run dashboard:api` (usa `DASHBOARD_API_PORT` si necesitas otro puerto).
 2. En otra terminal, instala dependencias del front: `cd dashboards && npm install`.
 3. Levanta el dashboard con `npm run dev` (Vite en `http://localhost:5173`).
 4. Ajusta la variable `VITE_API_BASE_URL` en `dashboards/.env.local` si cambiaste el puerto/base de la API.
 5. Compila para producción con `npm run build`; los artefactos quedan en `dashboards/dist`.
+
+### Indicadores disponibles
+- KPIs derivados: tasa de conversión (deals/contactos), contactos promedio por owner y actividades por contacto.
+- Visualizaciones: contactos por estado, top owners, mix de estados por owner (stacked), timeline de contactos, comparativa contactos vs actividades (combo bar/line), compañías por owner y actividades por tipo.
 
 ## Solución de problemas
 - Asegúrate de conectarte a la DB de `.env` (p.ej. `hubspot_dw`) y al esquema correcto (`raw_hubspot`). Valida con:

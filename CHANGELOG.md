@@ -42,3 +42,11 @@ El formato se inspira en “Keep a Changelog” y sigue SemVer.
 
 ### Removido
 - Dependencias innecesarias para proxy por defecto (uso opcional de `undici` si se requiere).
+## [1.2.0] - 2025-09-27
+
+### Agregado
+- Métricas adicionales en la API de dashboard: KPIs derivados (tasa de conversión, carga promedio por owner, actividades por contacto) y datasets para mix de estados por owner y actividades mensuales.
+- Gráficos y tarjetas KPI en el frontend (React + Chart.js) que aprovechan los nuevos datos, incluyendo comparación mensual contactos vs actividades y stacked por estado.
+
+### Modificado
+- Hook `useDashboardData` robustecido para normalizar la respuesta del backend y tolerar campos ausentes u obsoletos.
